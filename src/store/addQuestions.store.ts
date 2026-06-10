@@ -36,7 +36,6 @@ interface AddQuestionsState {
 
 interface AddQuestionsActions {
   initForTest: (testId: string, totalQuestions: number) => void;
-  /** Replace drafts from GET test + fetchBulk (edit from Test Tracking). */
   hydrateDraftsFromApi: (
     testId: string,
     drafts: QuestionDraftV2[],
@@ -44,11 +43,6 @@ interface AddQuestionsActions {
   ) => void;
   setActiveIndex: (idx: number) => void;
   updateDraft: (idx: number, patch: Partial<QuestionDraftV2>) => void;
-  addAnother: () => void;
-  /**
-   * Merge CSV rows into empty draft slots only.
-   * Never changes the configured question count (drafts length).
-   */
   importCsvDrafts: (
     incoming: QuestionDraftV2[],
     defaults?: { topicId?: string; subTopicId?: string },
@@ -116,7 +110,6 @@ function applyTopicDefaults(
   };
 }
 
-/** Apply test topic defaults and set isSaved when draft passes the same validation as manual Next. */
 function finalizeCsvDraft(
   draft: QuestionDraftV2,
   questionNumber: number,
@@ -247,15 +240,6 @@ export const useAddQuestionsStore = create<AddQuestionsState & AddQuestionsActio
         return { drafts };
       }),
 
-    addAnother: () =>
-      set((s) => {
-        const drafts = [...s.drafts, newDraft()];
-        const activeIndex = drafts.length - 1;
-        const next = { ...s, drafts, activeIndex };
-        persistCurrent(next);
-        return { drafts, activeIndex };
-      }),
-
     importCsvDrafts: (incoming, defaults) => {
       const s = get();
       if (!incoming.length) return 0;
@@ -277,17 +261,6 @@ export const useAddQuestionsStore = create<AddQuestionsState & AddQuestionsActio
       }
 
       const activeIndex = clampIndex(s.activeIndex, drafts.length);
-
-      console.log('[addQuestions] importCsvDrafts', {
-        beforeCount: s.drafts.length,
-        incomingCount: incoming.length,
-        mergedIntoEmptySlots: mergeCursor,
-        afterCount: drafts.length,
-        activeIndex,
-        savedCount: drafts.filter((d) => d.isSaved).length,
-        selectedAfter: drafts[activeIndex],
-      });
-
       const next = { ...s, drafts, activeIndex };
       set({ drafts, activeIndex });
       persistCurrent(next);

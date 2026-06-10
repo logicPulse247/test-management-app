@@ -498,14 +498,9 @@ export default function TestCreationPage() {
     if (lastHydratedKeyRef.current === hydrationKey) return;
     lastHydratedKeyRef.current = hydrationKey;
 
-    console.log('Edit Test Response', hydratedTest);
-    console.log('Hydrating Test Form', formValues);
-
     applyTestFormHydration(formValues);
     createForm.reset(formValues);
     syncMetaFromFormValues(formValues);
-
-    console.log('Form Values After Hydration', createForm.getValues());
 
     if (isEditModalOpen) {
       form.reset({
@@ -604,7 +599,6 @@ export default function TestCreationPage() {
           </div>
         </div>
 
-        {/* Step screens */}
         <div>
           <div className="py-5">
             {createError ? (
@@ -678,9 +672,7 @@ export default function TestCreationPage() {
                     );
                   }
                 },
-                (errors) => {
-                  console.log('FORM SUBMITTED');
-                  console.log('formState.errors', errors);
+                () => {
                   setCreateError('Please fix validation errors and try again.');
                 },
               )}

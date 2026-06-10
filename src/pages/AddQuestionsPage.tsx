@@ -63,6 +63,7 @@ import {
 } from '@/lib/questionTextFormat';
 import { buildCreateTestFormValuesFromEntity } from '@/lib/testFormHydration';
 import { parseQuestionsCsvFile } from '@/lib/csvImport';
+import type { CsvImportResult } from '@/lib/csvImport';
 import {
   draftHasPersistedQuestionId,
   draftToBulkInput,
@@ -301,8 +302,6 @@ export default function AddQuestionsPage() {
         subTopicCatalog: subTopicsQuery.data ?? [],
         fallbackTestType: String(test.type ?? ''),
       });
-      console.log('Edit Test Response', test);
-      console.log('Hydrating Test Form', formValues);
       applyTestFormHydration(formValues);
     }
     enterWizardEdit(testId);
@@ -368,9 +367,6 @@ export default function AddQuestionsPage() {
     if (!isEditFlow || !testId || !testQuery.data?.id) return;
     if (testQuery.data.id !== testId) return;
 
-    const testDataForEdit = testQuery.data;
-    console.log('Edit Test', testDataForEdit);
-
     if (linkedQuestionIds.length === 0) {
       initForTest(testId, testTotalQuestions);
       return;
@@ -384,7 +380,6 @@ export default function AddQuestionsPage() {
     }
 
     const questions = questionsQuery.data ?? [];
-    console.log('Fetched Questions', questions);
 
     if (linkedQuestionIds.length > 0 && questions.length === 0) {
       setPageError(
@@ -399,7 +394,6 @@ export default function AddQuestionsPage() {
       topicId: defaultTopicId,
       subTopicId: defaultSubTopicId,
     });
-    console.log('Mapped Drafts', mappedDrafts);
 
     const hydrationKey = [
       testId,
@@ -504,15 +498,6 @@ export default function AddQuestionsPage() {
     if (!isSelectableQuestionIndex(drafts, index)) return;
     setPageError(null);
     setActiveIndex(index);
-    const selected = useAddQuestionsStore.getState().drafts[index];
-    console.log('[AddQuestions] sidebar select', {
-      index,
-      questionNumber: index + 1,
-      draft: selected,
-      questionHtml: selected?.questionHtml,
-      options: selected?.options,
-      correctIndex: selected?.correctIndex,
-    });
   }
 
   function handleArrowPrevious() {
@@ -551,19 +536,12 @@ export default function AddQuestionsPage() {
     setCsvImportInfo(null);
 
     const beforeImport = useAddQuestionsStore.getState();
-    console.log('[AddQuestions] CSV import — store before', {
-      draftCount: beforeImport.drafts.length,
-      activeIndex: beforeImport.activeIndex,
-      selected: beforeImport.drafts[beforeImport.activeIndex],
-    });
 
-    const result = await parseQuestionsCsvFile(file);
-    if (!result.ok) {
+    const result: CsvImportResult = await parseQuestionsCsvFile(file);
+    if (result.ok === false) {
       setPageError(result.errors.join(' '));
       return;
     }
-
-    console.log('[AddQuestions] CSV import — parsed rows', result.drafts);
 
     const configuredCount = totalQuestions;
     const csvCount = result.drafts.length;
@@ -595,14 +573,6 @@ export default function AddQuestionsPage() {
     const importedCount = importCsvDrafts(result.drafts, {
       topicId: defaultTopicId,
       subTopicId: defaultSubTopicId,
-    });
-
-    const afterImport = useAddQuestionsStore.getState();
-    console.log('[AddQuestions] CSV import — store after', {
-      draftCount: afterImport.drafts.length,
-      activeIndex: afterImport.activeIndex,
-      drafts: afterImport.drafts,
-      selected: afterImport.drafts[afterImport.activeIndex],
     });
 
     setCsvImportInfo(
@@ -649,12 +619,6 @@ export default function AddQuestionsPage() {
       draftToBulkInput(d, testId, testSubjectName),
     );
 
-    console.log('[AddQuestions] finalize — draft count', {
-      totalDrafts: drafts.length,
-      savedDraftCount: savedDrafts.length,
-      questionsToBulk: inputs.length,
-    });
-
     try {
       if (isEditFlow && savedDrafts.every(draftHasPersistedQuestionId)) {
         clearPersistedAddQuestions(testId);
@@ -665,13 +629,7 @@ export default function AddQuestionsPage() {
         return;
       }
 
-      const result = await bulkMutation.mutateAsync(inputs);
-
-      console.log('[AddQuestions] finalize — persistence complete', {
-        createdQuestionIds: result.createdQuestionIds,
-        attachedQuestionIds: result.attachedQuestionIds,
-        testQuestionsOnRecord: result.test.questions,
-      });
+      await bulkMutation.mutateAsync(inputs);
 
       clearPersistedAddQuestions(testId);
       setTestFlowMode('create');
@@ -718,7 +676,6 @@ export default function AddQuestionsPage() {
       {testQuery.data && activeDraft ? (
         <div className="overflow-hidden rounded-lg border border-[#E5E7EB] bg-white">
           <div className="grid min-h-[820px] grid-cols-[168px_minmax(0,1fr)]">
-            {/* question navigator sidebar */}
             <div className="border-r border-[#E5E7EB] bg-white px-2 py-3">
               <div className="px-1.5">
                 <div className="text-sm font-semibold text-[#6B7180]">
@@ -769,7 +726,6 @@ export default function AddQuestionsPage() {
               </div>
             </div>
 
-            {/* main content */}
             <div className="flex min-w-0 flex-col bg-[#F8FAFC]">
               <div className="flex-1 p-5 pb-0">
                 <div className="flex items-start justify-between">
@@ -779,7 +735,6 @@ export default function AddQuestionsPage() {
                   <button className='inline-flex h-10 min-w-[100px] items-center justify-center rounded-md bg-[#5B7CFA] px-10 text-[12px] font-semibold text-white hover:bg-[#4A6EFF] disabled:opacity-60'>Publish</button>
                 </div>
 
-                {/* summary card */}
                 <div className="relative mt-4 rounded-xl border border-[#E5E7EB] bg-white px-5 py-5">
                   {!isReadOnlyFlow ? (
                     <button
@@ -865,7 +820,6 @@ export default function AddQuestionsPage() {
                   </div>
                 </div>
 
-                {/* question header */}
                 <div className="mt-5 flex items-start justify-between">
                   <div>
                     <div className="text-[13px] font-semibold text-[#111827]">
@@ -920,7 +874,6 @@ export default function AddQuestionsPage() {
                   </div>
                 </div>
 
-                {/* editor — full width */}
                 <div className="mt-3 rounded-xl border border-[#E5E7EB] bg-white">
                   <div className="flex items-center gap-2 border-b border-[#E5E7EB] px-3 py-2 text-[#6B7280]">
                     <button
@@ -1015,7 +968,6 @@ export default function AddQuestionsPage() {
                   ) : null}
                 </div>
 
-                {/* options */}
                 <div className="mt-6">
                   <div className="text-[12px] font-semibold text-[#111827]">
                     Type the options below
@@ -1064,7 +1016,6 @@ export default function AddQuestionsPage() {
                   </div>
                 </div>
 
-                {/* solution */}
                 <div className="mt-6">
                   <div className="text-[12px] font-semibold text-[#111827]">
                     Add Solution
@@ -1089,7 +1040,6 @@ export default function AddQuestionsPage() {
                   </div>
                 </div>
 
-                {/* mid-page arrows (Figma: between solution and settings) */}
                 <div className="mt-6 flex items-center justify-center gap-2">
                   <button
                     type="button"
@@ -1113,7 +1063,6 @@ export default function AddQuestionsPage() {
                   </button>
                 </div>
 
-                {/* question settings — below solution */}
                 <div className="mt-6">
                   <div className="text-[12px] font-semibold text-[#111827]">
                     Question settings
@@ -1217,7 +1166,6 @@ export default function AddQuestionsPage() {
                 </div>
               </div>
 
-              {/* bottom action bar */}
               <div className="mt-8 flex items-center justify-between border-t border-[#E5E7EB] bg-white px-5 py-4">
                 <button
                   type="button"

@@ -24,9 +24,7 @@ export function Header() {
   return (
     <header className="flex h-14 items-center justify-between border-b border-[#E5E7EB] bg-white px-6">
       <div className="flex items-center gap-2">
-        <div className="text-[12px] text-[#6B7280]">
-          {/* breadcrumb placeholder, screens show subtle context here */}
-        </div>
+        <div className="text-[12px] text-[#6B7280]" />
       </div>
 
       <div className="flex items-center gap-3">

@@ -82,7 +82,6 @@ export default function PreviewPublishPage() {
 
   return (
     <PageContainer className="max-w-none px-4 py-4 sm:px-6">
-      {/* Page header */}
       <div className="mb-4">
         <div className="text-[12px] text-[#6B7280]">Test creation</div>
         <div className="mt-2 flex flex-wrap items-center justify-between gap-3">

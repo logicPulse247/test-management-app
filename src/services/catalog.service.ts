@@ -22,26 +22,20 @@ function isSuccess(body: CatalogApiBody<unknown>): boolean {
 
 export async function fetchSubjects(): Promise<Subject[]> {
   const { data } = await apiClient.get<CatalogApiBody<unknown>>('/subjects');
-  console.log('SUBJECTS RESPONSE', data);
   if (!isSuccess(data)) {
     return [];
   }
-  const normalized = normalizeSubjects(data.data);
-  console.log('SUBJECTS NORMALIZED', normalized);
-  return normalized;
+  return normalizeSubjects(data.data);
 }
 
 export async function fetchTopicsBySubject(subjectId: string): Promise<Topic[]> {
   const { data } = await apiClient.get<CatalogApiBody<unknown>>(
     `/topics/subject/${subjectId}`,
   );
-  console.log('TOPICS RESPONSE', { subjectId, data });
   if (!isSuccess(data)) {
     return [];
   }
-  const normalized = normalizeTopics(data.data);
-  console.log('TOPICS NORMALIZED', normalized);
-  return normalized;
+  return normalizeTopics(data.data);
 }
 
 export async function fetchSubTopicsByTopics(
@@ -52,27 +46,21 @@ export async function fetchSubTopicsByTopics(
     .filter((id) => isValidCatalogId(id));
 
   if (!validIds.length) {
-    console.log('SUB TOPICS REQUEST skipped — no valid topic UUIDs', topicIds);
     return [];
   }
 
   const payload = { topicIds: validIds };
-  console.log('SUB TOPICS REQUEST', payload);
 
   try {
     const { data } = await apiClient.post<CatalogApiBody<unknown>>(
       '/sub-topics/multi-topics',
       payload,
     );
-    console.log('SUB TOPICS RESPONSE', data);
     if (!isSuccess(data)) {
       return [];
     }
-    const normalized = normalizeSubTopics(data.data);
-    console.log('SUB TOPICS NORMALIZED', normalized);
-    return normalized;
-  } catch (error: unknown) {
-    console.log('SUB TOPICS ERROR', error);
+    return normalizeSubTopics(data.data);
+  } catch {
     return [];
   }
 }

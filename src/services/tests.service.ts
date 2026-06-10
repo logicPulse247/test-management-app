@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { apiClient } from '@/lib/api';
 import { normalizeTestEntity } from '@/lib/testEntity';
 import type { ApiResponse } from '@/types/api.types';
@@ -22,7 +21,6 @@ type TestApiBody = {
 
 export async function fetchTestById(testId: string): Promise<TestEntity> {
   const { data } = await apiClient.get<TestApiBody>(`/tests/${testId}`);
-  console.log('GET TEST BY ID RESPONSE', data);
   if (data.status === 'success' || data.success === true) {
     if (!data.data) {
       throw new Error('Test not found in response');
@@ -35,22 +33,11 @@ export async function fetchTestById(testId: string): Promise<TestEntity> {
 export async function createTest(
   payload: CreateTestPayload,
 ): Promise<TestEntity> {
-  try {
-    console.log('CREATE TEST PAYLOAD', payload);
-    const { data } = await apiClient.post<ApiResponse<TestEntity>>(
-      '/tests',
-      payload,
-    );
-    return normalizeTestEntity(data.data);
-  } catch (error: unknown) {
-    if (axios.isAxiosError(error)) {
-      console.log('CREATE TEST ERROR', error.response?.data);
-      console.log('CREATE TEST STATUS', error.response?.status);
-    } else {
-      console.log('CREATE TEST ERROR', error);
-    }
-    throw error;
-  }
+  const { data } = await apiClient.post<ApiResponse<TestEntity>>(
+    '/tests',
+    payload,
+  );
+  return normalizeTestEntity(data.data);
 }
 
 export async function updateTest(
@@ -64,7 +51,6 @@ export async function updateTest(
   return normalizeTestEntity(data.data);
 }
 
-/** Link question UUIDs on the test record (required for Preview fetchBulk by test.questions). */
 export async function attachQuestionsToTest(
   testId: string,
   questionIds: string[],
@@ -79,14 +65,7 @@ export async function attachQuestionsToTest(
   }
 
   const payload: UpdateTestPayload = { questions: ids };
-  console.log('[tests] attachQuestionsToTest payload', { testId, payload });
-  const updated = await updateTest(testId, payload);
-  console.log('[tests] attachQuestionsToTest response', {
-    testId,
-    questionCount: updated.questions?.length ?? 0,
-    questionIds: updated.questions,
-  });
-  return updated;
+  return updateTest(testId, payload);
 }
 
 export async function deleteTest(testId: string): Promise<void> {

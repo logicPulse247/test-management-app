@@ -107,7 +107,6 @@ export default function TestTrackingPage() {
     setActionError(null);
     try {
       const test = await prefetchTest(testId);
-      console.log('Edit Test Response', test);
 
       const subjects = await queryClient.fetchQuery({
         queryKey: queryKeys.subjects(),
@@ -117,7 +116,6 @@ export default function TestTrackingPage() {
         subjects,
         fallbackTestType: String(test.type ?? ''),
       });
-      console.log('Hydrating Test Form', formValues);
       applyTestFormHydration(formValues);
 
       setCurrentTestId(testId);
@@ -221,9 +219,6 @@ export default function TestTrackingPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button variant="secondary" size="sm" type="button" onClick={() => {}}>
-              Export
-            </Button>
             <Button variant="primary" size="sm" type="button" onClick={handleNewTest}>
               New Test
             </Button>
@@ -300,7 +295,6 @@ export default function TestTrackingPage() {
                         disabled={deletingId === r.id || deleteMutation.isPending}
                         onClick={() => void handleDelete(r.id, r.name)}
                       >
-                        {/* {deletingId === r.id ? 'Deleting…' : 'Delete'} */}
                         <Trash className='font-normal text-[#6B7280] h-[17px]'/>
                       </Button>
                     </div>

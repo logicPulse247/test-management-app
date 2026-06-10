@@ -106,7 +106,6 @@ function unwrapQuestionsList(payload: unknown): QuestionEntity[] {
     .filter((q): q is QuestionEntity => q !== null);
 }
 
-/** Fetch questions by id list (POST /questions/fetchBulk). */
 export async function fetchQuestionsBulk(
   questionIds: string[],
 ): Promise<QuestionEntity[]> {
@@ -116,12 +115,10 @@ export async function fetchQuestionsBulk(
   }
 
   const payload = { question_ids: ids };
-  console.log('FETCH QUESTIONS BULK PAYLOAD', payload);
   const { data } = await apiClient.post<FetchBulkBody>(
     '/questions/fetchBulk',
     payload,
   );
-  console.log('FETCH QUESTIONS BULK RESPONSE', data);
 
   if (data.status === 'success' || data.success === true) {
     return unwrapQuestionsList(data.data ?? data.questions ?? data);
@@ -130,10 +127,6 @@ export async function fetchQuestionsBulk(
   return unwrapQuestionsList(data);
 }
 
-/**
- * Fields accepted by POST /questions/bulk on the `questions` table.
- * Do not send topic_id or sub_topic_id — not in PostgREST schema.
- */
 export type BulkCreateQuestionApiPayload = {
   type: 'mcq';
   question: string;
@@ -197,7 +190,6 @@ function unwrapCreatedQuestions(payload: unknown): CreatedQuestion[] {
   return [];
 }
 
-/** Extract UUIDs from POST /questions/bulk response bodies. */
 export function extractCreatedQuestionIds(payload: unknown): string[] {
   const rows = unwrapCreatedQuestions(payload);
   const ids: string[] = [];
@@ -219,21 +211,11 @@ export async function bulkCreateQuestions(
   const payload = {
     questions: questions.map(serializeBulkQuestion),
   };
-  console.log('[questions] bulkCreateQuestions payload', {
-    count: payload.questions.length,
-    payload,
-  });
   const { data } = await apiClient.post<ApiResponse<CreatedQuestion[]>>(
     '/questions/bulk',
     payload,
   );
-  console.log('[questions] bulkCreateQuestions response', data);
-  const created = unwrapCreatedQuestions(data?.data ?? data);
-  console.log('[questions] bulkCreateQuestions created IDs', {
-    count: created.length,
-    ids: created.map((q) => q.id),
-  });
-  return created;
+  return unwrapCreatedQuestions(data?.data ?? data);
 }
 
 export type BulkCreateAndLinkResult = {
@@ -243,9 +225,6 @@ export type BulkCreateAndLinkResult = {
   test: TestEntity;
 };
 
-/**
- * Persist questions via bulk API, then PUT /tests/:id with questions[] so Preview can load them.
- */
 export async function bulkCreateQuestionsAndLinkToTest(
   testId: string,
   questions: BulkCreateQuestionInput[],
